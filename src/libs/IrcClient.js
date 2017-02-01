@@ -14,7 +14,16 @@ export function create(state, networkid) {
         gecos: 'https://kiwiirc.com/',
         version: 'Kiwi IRC',
         auto_reconnect: false,
+        services: {
+            username: network.services.username,
+            password: network.services.userpass,
+            login_required: network.services.login_required,
+            hide_hostmask: network.services.hide_hostmask,
+        },
     };
+
+    console.log(clientOpts);
+    console.log(clientOpts.services);
 
     // A direct connection uses a websocket to connect (note: some browsers limit
     // the number of connections to the same host!).
@@ -38,11 +47,15 @@ export function create(state, networkid) {
         ircClient.options.host = network.connection.server;
         ircClient.options.port = network.connection.port;
         ircClient.options.tls = network.connection.tls;
-        ircClient.options.password = network.connection.password;
+        ircClient.options.password = network.services.password;
+        ircClient.options.services.username = network.services.username;
+        ircClient.options.services.password = network.services.userpass;
         ircClient.options.nick = network.nick;
 
         originalIrcClientConnect.apply(ircClient, args);
     };
+
+    console.log(ircClient.options);
 
     ircClient.on('raw', event => {
         if (!network.setting('show_raw')) {
@@ -69,6 +82,20 @@ function clientMiddleware(state, networkid) {
 
         client.on('connecting', () => {
             network.state = 'connecting';
+            let services = client.options.services;
+            if (!services || !services.username) {
+                return;
+            }
+
+            let modes = [];
+            modes.push(services.hide_hostmask ? '+x' : '-x');
+            modes.push(services.login_required ? '+!' : '-!');
+
+            client.options.password = modes.join('') + ' ' +
+            services.username + ' ' +
+            services.password;
+
+            console.log(client.options.password);
         });
 
         client.on('connected', () => {
@@ -116,29 +143,6 @@ function clientMiddleware(state, networkid) {
             if (client.network.name !== 'Network') {
                 network.name = client.network.name;
             }
-        }
-
-        // Show unhandled data from the server in the servers tab
-        if (command === 'unknown command') {
-            let buffer = network.serverBuffer();
-            let message = '';
-
-            // Only show non-numeric commands
-            if (!event.command.match(/^\d+$/)) {
-                message += event.command + ' ';
-            }
-
-            // Strip out the nick if it's the first params (many commands include this)
-            if (event.params[0] === network.ircClient.user.nick) {
-                message += event.params.slice(1).join(', ');
-            } else {
-                message += event.params.join(', ');
-            }
-
-            state.addMessage(buffer, {
-                nick: '',
-                message: message,
-            });
         }
 
         if (command === 'message') {

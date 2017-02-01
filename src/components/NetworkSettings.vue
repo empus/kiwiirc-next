@@ -14,11 +14,20 @@
         </div>
 
         <form class="u-form">
+            <!--
             <div class="kiwi-networksettings-section kiwi-networksettings-connection">
                 <label><span>Server:</span> <input v-model="network.connection.server" /></label><br />
                 <label><span>Port:</span> <input v-model="network.connection.port" /></label><br />
                 <label><span>SSL/TLS:</span> <input v-model="network.connection.tls" type="checkbox" /></label><br />
-                <label><span>Password:</span> <input v-model="network.connection.password" /></label>
+                <label><span>Password:</span> <input type="password" v-model="network.connection.password" /></label>
+            </div>
+            -->
+
+            <div class="kiwi-networksettings-section  kiwi-networksettings-services">
+                <h3>CService Authentication</h3>
+                <label><span>Username:</span> <input v-model="network.services.username" /></label>
+                <label><span>Password:</span> <input type="password" v-model="network.services.userpass" /></label>
+                <label><span>TOTP Token:</span> <input v-model="network.services.token" /></label>
             </div>
 
             <div class="kiwi-networksettings-section  kiwi-networksettings-user">
